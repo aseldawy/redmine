@@ -1,6 +1,8 @@
 class AddBillable < ActiveRecord::Migration
   def self.up
     add_column :issues, :billable, :boolean
+    Issue.reset_column_information
+    Project.reset_column_information
     billable_custom_field = CustomField.find_by_name("Billable")
     if billable_custom_field
       Issue.find(:all).each do |i|
@@ -11,7 +13,6 @@ class AddBillable < ActiveRecord::Migration
           end
         end
       end
-      
       billable_custom_field.destroy
     end
   end
