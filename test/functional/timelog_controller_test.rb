@@ -470,6 +470,6 @@ class TimelogControllerTest < ActionController::TestCase
     @response.body.gsub(/\<time-entry-activity\>/) do
       count += 1
     end
-    assert_equal count, 3
+    assert_equal TimeEntryActivity.count, count
   end
 end

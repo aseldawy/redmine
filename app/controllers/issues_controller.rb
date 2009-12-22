@@ -78,7 +78,7 @@ class IssuesController < ApplicationController
         format.atom { render_feed(@issues, :title => "#{@project || Setting.app_title}: #{l(:label_issue_plural)}") }
         format.csv  { send_data(issues_to_csv(@issues, @project), :type => 'text/csv; header=present', :filename => 'export.csv') }
         format.pdf  { send_data(issues_to_pdf(@issues, @project, @query), :type => 'application/pdf', :filename => 'export.pdf') }
-        format.xml  { render :xml=>@issues.sort_by(&:subject)}
+        format.xml  { render :xml=>@issues}
       end
     else
       # Send html if the query is not valid

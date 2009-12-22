@@ -85,7 +85,7 @@ class ProjectsControllerTest < ActionController::TestCase
     @response.body.gsub(/\<project\>/) do
       count += 1
     end
-    assert_equal 4, count
+    assert_equal 6, count
   end
 
   def test_index_xml_member

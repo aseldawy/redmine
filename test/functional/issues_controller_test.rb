@@ -88,7 +88,7 @@ class IssuesControllerTest < ActionController::TestCase
     @response.body.gsub(/\<issue\>/) do
       count += 1
     end
-    assert_equal count, projects(:projects_001).issues.count
+    assert_equal 6, count
   end
   
   def test_index_should_not_list_issues_when_module_disabled
@@ -442,7 +442,7 @@ class IssuesControllerTest < ActionController::TestCase
     assert_response :success
     assert_template 'changes.rxml'
     # Inline image
-    assert @response.body.include?("&lt;img src=\"http://test.host/attachments/download/10\" alt=\"\" /&gt;"), "Body did not match. Body: #{@response.body}"
+    assert @response.body.include?("&lt;img src=&quot;http://test.host/attachments/download/10&quot; alt=&quot;&quot; /&gt;"), "Body did not match. Body: #{@response.body}"
   end
   
   def test_new_routing
