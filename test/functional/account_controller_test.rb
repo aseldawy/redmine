@@ -31,6 +31,23 @@ class AccountControllerTest < ActionController::TestCase
     User.current = nil
   end
   
+  def test_login_xml_route
+    assert_routing({:method=>:post, :path=>'/account/login.xml'},
+      :controller=>'account', :action=>'login', :format=>'xml')
+  end
+  
+  def test_successful_login_xml
+    post :login, :username => 'jsmith', :password => 'jsmith', :format=>'xml'
+    assert_response :ok
+    assert_equal @response.body, 'successful-authentication'
+  end
+  
+  def test_failure_login_xml
+    post :login, :username => 'jsmith', :password => 'bad-password', :format=>'xml'
+    assert_response :ok
+    assert_equal @response.body, 'Invalid credentials'
+  end
+  
   def test_login_should_redirect_to_back_url_param
     # request.uri is "test.host" in test environment
     post :login, :username => 'jsmith', :password => 'jsmith', :back_url => 'http%3A%2F%2Ftest.host%2Fissues%2Fshow%2F1'

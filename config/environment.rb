@@ -10,6 +10,9 @@ RAILS_GEM_VERSION = '2.3.4' unless defined? RAILS_GEM_VERSION
 # Bootstrap the Rails environment, frameworks, and default configuration
 require File.join(File.dirname(__FILE__), 'boot')
 
+USER_IMAGES_DIR = "timelog_images#{File::SEPARATOR}#{RAILS_ENV}"
+Dir.mkdir(USER_IMAGES_DIR) if !File.directory?(USER_IMAGES_DIR)
+
 # Load Engine plugin if available
 begin
   require File.join(File.dirname(__FILE__), '../vendor/plugins/engines/boot')

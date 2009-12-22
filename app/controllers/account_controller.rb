@@ -140,6 +140,10 @@ class AccountController < ApplicationController
 
     if user.nil?
       invalid_credentials
+      respond_to do |format|
+        format.html {}
+        format.xml {render :xml=>'Invalid credentials' }
+      end
     elsif user.new_record?
       onthefly_creation_failed(user, {:login => user.login, :auth_source_id => user.auth_source_id })
     else
@@ -199,14 +203,20 @@ class AccountController < ApplicationController
       cookies[:autologin] = { :value => token.value, :expires => 1.year.from_now }
     end
     call_hook(:controller_account_success_authentication_after, {:user => user })
-    redirect_back_or_default :controller => 'my', :action => 'page'
+    respond_to do |format|
+      format.html {redirect_back_or_default :controller => 'my', :action => 'page' }
+      format.xml {render :xml=>'successful-authentication' }
+    end
   end
 
   # Onthefly creation failed, display the registration form to fill/fix attributes
   def onthefly_creation_failed(user, auth_source_options = { })
     @user = user
     session[:auth_source_registration] = auth_source_options unless auth_source_options.empty?
-    render :action => 'register'
+    respond_to do |format|
+      format.html { render :action => 'register' }
+      format.xml { render :xml=>'onthefly-creation-failed' }
+    end
   end
 
   def invalid_credentials

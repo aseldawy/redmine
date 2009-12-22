@@ -53,12 +53,16 @@ module TimelogHelper
     collection
   end
   
-  def select_hours(data, criteria, value)
+  def select_hours(data, criteria, value, billable=nil)
   	if value.to_s.empty?
-  		data.select {|row| row[criteria].blank? }
+  		data = data.select {|row| row[criteria].blank? }
     else 
-    	data.select {|row| row[criteria] == value}
+    	data = data.select {|row| row[criteria] == value}
     end
+    if billable != nil
+      data = data.select {|row| row["billable"] == billable}
+    end
+    data
   end
   
   def sum_hours(data)
@@ -67,6 +71,12 @@ module TimelogHelper
       sum += row['hours'].to_f
     end
     sum
+  end
+  
+  def ratio_color(ratio)
+    red_component = (1-ratio) * 255
+    green_component = (ratio) * 128
+    "#%02x%02x%02x" % [red_component, green_component, 0]
   end
   
   def options_for_period_select(value)
@@ -186,5 +196,58 @@ module TimelogHelper
   def to_utf8(s)
     @ic ||= Iconv.new(l(:general_csv_encoding), 'UTF-8')
     begin; @ic.iconv(s.to_s); rescue; s.to_s; end
+  end
+  
+  def url_for_time_details(hours_for_value, criterias, level, value, periods_time, period_i, options={})
+    url_hash = {:controller=>'timelog', :action=>'report' }
+    # add select for criteria
+    url_hash[:criterias] = criterias
+    0.upto(level) do |i|
+      if hours_for_value[0][criterias[i]]
+        if criterias[i] == "member"
+          url_hash[:user_id] = hours_for_value[0][criterias[i]]
+        elsif criterias[i] == "issue"
+          url_hash[:issue_id] = hours_for_value[0][criterias[i]]
+          url_hash[:project_id] = Issue.find(hours_for_value[0][criterias[i]]).project
+        end
+      end
+    end
+    
+    # add select for date
+    url_hash.update({:period=>'all', :period_type=>2 })
+    url_hash[:from] = periods_time[period_i][:date_from].strftime("%Y-%m-%d")
+    url_hash[:to] = periods_time[period_i][:date_to].strftime("%Y-%m-%d")
+    
+    # update with options
+    url_hash.update(options)
+    url_for url_hash
+  end
+  
+  def time_entry_color(time_entry)
+    "##{time_entry.issue.color}"
+  end
+  
+  def time_entry_title(time_entry)
+    "[#{html_hours(time_entry.hours)}] #{time_entry.project.name}/#{time_entry.issue.subject}(#{time_entry.comments})"
+  end
+
+  def time_entry_width(hours, scale, border = 0)
+    if hours.is_a? TimeEntry
+      hours = hours.hours
+    end
+    width = hours  * scale - border * 2
+    width = 0 if width < 0
+    "#{width}px"
+  end
+  
+  def time_entry_div(time_entry, options)
+    %{<div class="entry #{time_entry.issue.css_classes}" title="#{time_entry_title(time_entry)}"
+      style="background-color: #{time_entry_color(time_entry)}; width: #{time_entry_width(time_entry, options[:scale], 1)}; border: solid 1px;">
+      #{time_entry_title(time_entry)}</div>}
+  end
+  
+  def empty_div(hours, text, options)
+    options[:border] ||= 0
+    %{<div class="entry" style="width: #{time_entry_width(hours, options[:scale], options[:border])}; #{options[:style]}">#{text}</div>}
   end
 end

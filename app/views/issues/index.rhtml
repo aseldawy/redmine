@@ -63,6 +63,16 @@
 <p class="pagination"><%= pagination_links_full @issue_pages, @issue_count %></p>
 <% end %>
 
+<% if User.current.allowed_to?(:add_issues, @project) %>
+	<% form_for :issue, :url=>{:controller=>'issues', :action=>'new', :project_id=>@project} do |f| %>
+	  <%= l(:label_issue_new) %>
+	  <%= f.select :tracker_id, @project.trackers.collect {|t| [t.name, t.id]}, :required => true %>
+	  <%= f.text_field :subject, :required => true %>
+	  <%= f.hidden_field :priority_id, :value=>IssuePriority.find(:first).id %>
+	  <%= hidden_field_tag :then_list, :value=>'1' %>
+	  <%= f.submit l(:button_submit)%>
+	<% end %>
+<% end %>
 <% other_formats_links do |f| %>
 	<%= f.link_to 'Atom', :url => { :project_id => @project, :query_id => (@query.new_record? ? nil : @query), :key => User.current.rss_key } %>
 	<%= f.link_to 'CSV', :url => { :project_id => @project } %>

@@ -77,6 +77,20 @@ class IssuesControllerTest < ActionController::TestCase
     assert_tag :tag => 'th', :content => /Project/
   end
   
+  def test_index_xml_route
+    assert_routing({:method=>:get, :path=>'/projects/ecookbook/issues.xml'},
+      :controller=>'issues', :action=>'index', :project_id=>'ecookbook', :format=>'xml')
+  end
+  
+  def test_index_xml
+    get :index, :format=>'xml', :project_id=>'ecookbook'
+    count = 0
+    @response.body.gsub(/\<issue\>/) do
+      count += 1
+    end
+    assert_equal count, projects(:projects_001).issues.count
+  end
+  
   def test_index_should_not_list_issues_when_module_disabled
     EnabledModule.delete_all("name = 'issue_tracking' AND project_id = 1")
     get :index
@@ -838,7 +852,7 @@ class IssuesControllerTest < ActionController::TestCase
       post :edit,
            :id => 1,
            :notes => '2.5 hours added',
-           :time_entry => { :hours => '2.5', :comments => '', :activity_id => TimeEntryActivity.first }
+           :time_entry => { :spent_from=>Time.now, :spent_to=>(2.5).hours.from_now, :comments => '', :activity_id => TimeEntryActivity.first }
     end
     assert_redirected_to :action => 'show', :id => '1'
     
@@ -922,7 +936,7 @@ class IssuesControllerTest < ActionController::TestCase
     
     assert_tag :textarea, :attributes => { :name => 'notes' },
                           :content => notes
-    assert_tag :input, :attributes => { :name => 'time_entry[hours]', :value => "2z" }
+    #assert_tag :input, :attributes => { :name => 'time_entry[hours]', :value => "2z" }
   end
   
   def test_post_edit_should_allow_fixed_version_to_be_set_to_a_subproject
@@ -1123,6 +1137,14 @@ class IssuesControllerTest < ActionController::TestCase
         assert_equal '2009-12-31', issue.due_date.to_s, "Due date is incorrect"
       end
     end
+  end
+  
+  def test_bulk_billable
+    @request.session[:user_id] = 2
+    post :bulk_edit, :ids => [1, 2], :billable => 'billable'
+    assert_redirected_to 'projects/ecookbook/issues'
+    assert Issue.find(1).billable
+    assert Issue.find(2).billable
   end
   
   def test_copy_to_another_project_should_follow_when_needed

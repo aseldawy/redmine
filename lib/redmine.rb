@@ -117,8 +117,11 @@ end
 
 Redmine::MenuManager.map :top_menu do |menu|
   menu.push :home, :home_path
-  menu.push :my_page, { :controller => 'my', :action => 'page' }, :if => Proc.new { User.current.logged? }
+  menu.push :my_page, { :controller => 'my', :action => 'page' }, :require => :loggedin
   menu.push :projects, { :controller => 'projects', :action => 'index' }, :caption => :label_project_plural
+  menu.push :log_time, { :controller => 'timelog', :action => 'edit' }, :require => :loggedin, :if => Proc.new { !(User.current.projects.blank?) }, :last => true
+  menu.push :time_details, { :controller => 'timelog', :action => 'report', :criterias=>['member', 'issue'], :columns=>'day', :period=>'current_week', :user_id=>'' }, :require => :loggedin, :if => Proc.new { !(User.current.projects.blank?) }, :last => true
+  menu.push :monthly_report, { :controller => 'timelog', :action => 'report', :criterias=>['member'], :columns=>'month', :period=>'current_year' }, :require => :member, :if => Proc.new { User.current.admin? }, :last => true
   menu.push :administration, { :controller => 'admin', :action => 'index' }, :if => Proc.new { User.current.admin? }, :last => true
   menu.push :help, Redmine::Info.help_url, :last => true
 end

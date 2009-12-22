@@ -81,10 +81,10 @@ class Enumeration < ActiveRecord::Base
   end
 
   # Backwards compatiblity.  Can be removed post-0.9
-  def opt
-    ActiveSupport::Deprecation.warn("Enumeration#opt is deprecated, use the STI classes now. (#{Redmine::Info.issue(3007)})")
-    return OptName
-  end
+  #def opt
+  #  ActiveSupport::Deprecation.warn("Enumeration#opt is deprecated, use the STI classes now. (#{Redmine::Info.issue(3007)})")
+  #  return OptName
+  #end
 
   def before_save
     if is_default? && is_default_changed?

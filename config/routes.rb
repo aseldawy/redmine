@@ -269,4 +269,9 @@ ActionController::Routing::Routes.draw do |map|
   map.connect 'robots.txt', :controller => 'welcome', :action => 'robots'
   # Used for OpenID
   map.root :controller => 'account', :action => 'login'
+  
+  # install xml routes as the lowest priority
+  map.connect '/account/login.xml', :controller=>'account', :action=>'login', :format=>'xml'
+  map.connect '/timelog/activities.xml', :controller=>'timelog', :action=>'activities', :format=>'xml'
+  map.connect '/timelog/edit.xml', :controller=>'timelog', :action=>'edit', :format=>'xml'
 end

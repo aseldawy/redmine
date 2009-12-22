@@ -58,6 +58,11 @@ class ProjectsController < ApplicationController
                                               :limit => Setting.feeds_limit.to_i)
         render_feed(projects, :title => "#{Setting.app_title}: #{l(:label_project_latest)}")
       }
+      format.xml  {
+        @projects = Project.visible.find(:all, :joins=>"LEFT JOIN members on projects.id = members.project_id", :conditions=>"projects.is_public = 1 OR members.user_id = #{User.current.id}", :order => 'name')
+        # we should use uniq because public projects are found multiple times
+        render :xml => @projects.uniq
+      }
     end
   end
   

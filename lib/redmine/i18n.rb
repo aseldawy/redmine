@@ -28,7 +28,7 @@ module Redmine
     
     def l_hours(hours)
       hours = hours.to_f
-      l((hours < 2.0 ? :label_f_hour : :label_f_hour_plural), :value => ("%.2f" % hours.to_f))
+      l((hours < 2.0 ? :label_f_hour : :label_f_hour_plural), :value => ("%d:%02d" % [hours.to_i, (hours.to_f - hours.to_i)*60]))
     end
     
     def ll(lang, str, value=nil)

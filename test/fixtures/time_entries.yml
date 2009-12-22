@@ -9,6 +9,8 @@ time_entries_001:
   activity_id: 9
   spent_on: 2007-03-23
   issue_id: 1
+  spent_from: 2007-03-23 00:00
+  spent_to: 2007-03-23 04:15
   id: 1
   hours: 4.25
   user_id: 2
@@ -22,6 +24,8 @@ time_entries_002:
   updated_on: 2007-03-23 14:11:04 +01:00
   activity_id: 9
   spent_on: 2007-03-12
+  spent_from: 2007-03-12 00:00
+  spent_to: 2007-03-18 06:00
   issue_id: 1
   id: 2
   hours: 150.0
@@ -36,6 +40,8 @@ time_entries_003:
   updated_on: 2007-04-21 12:20:48 +02:00
   activity_id: 9
   spent_on: 2007-04-21
+  spent_from: 2007-4-21 00:00
+  spent_to: 2007-4-21 01:00
   issue_id: 3
   id: 3
   hours: 1.0
@@ -50,6 +56,8 @@ time_entries_004:
   updated_on: 2007-04-22 12:20:48 +02:00
   activity_id: 10
   spent_on: 2007-04-22
+  spent_from: 2007-04-22 00:00
+  spent_to: 2007-04-22 07:39
   issue_id: 
   id: 4
   hours: 7.65

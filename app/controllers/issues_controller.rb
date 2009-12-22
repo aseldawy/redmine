@@ -62,6 +62,7 @@ class IssuesController < ApplicationController
         format.atom { limit = Setting.feeds_limit.to_i }
         format.csv  { limit = Setting.issues_export_limit.to_i }
         format.pdf  { limit = Setting.issues_export_limit.to_i }
+        format.xml  { }
       end
       
       @issue_count = @query.issue_count
@@ -77,6 +78,7 @@ class IssuesController < ApplicationController
         format.atom { render_feed(@issues, :title => "#{@project || Setting.app_title}: #{l(:label_issue_plural)}") }
         format.csv  { send_data(issues_to_csv(@issues, @project), :type => 'text/csv; header=present', :filename => 'export.csv') }
         format.pdf  { send_data(issues_to_pdf(@issues, @project, @query), :type => 'application/pdf', :filename => 'export.pdf') }
+        format.xml  { render :xml=>@issues.sort_by(&:subject)}
       end
     else
       # Send html if the query is not valid
@@ -154,6 +156,7 @@ class IssuesController < ApplicationController
         attach_files(@issue, params[:attachments])
         flash[:notice] = l(:notice_successful_create)
         call_hook(:controller_issues_new_after_save, { :params => params, :issue => @issue})
+        redirect_to(:action => 'index', :project_id => @project.id) and return if params[:then_list]
         redirect_to(params[:continue] ? { :action => 'new', :tracker_id => @issue.tracker } :
                                         { :action => 'show', :id => @issue })
         return
@@ -191,7 +194,7 @@ class IssuesController < ApplicationController
       
       call_hook(:controller_issues_edit_before_save, { :params => params, :issue => @issue, :time_entry => @time_entry, :journal => journal})
 
-      if (@time_entry.hours.nil? || @time_entry.valid?) && @issue.save
+      if (!(@time_entry.hours && @time_entry.hours > 0) || @time_entry.valid?) && @issue.save
         # Log spend time
         if User.current.allowed_to?(:log_time, @project)
           @time_entry.save
@@ -240,6 +243,7 @@ class IssuesController < ApplicationController
       assigned_to = (params[:assigned_to_id].blank? || params[:assigned_to_id] == 'none') ? nil : User.find_by_id(params[:assigned_to_id])
       category = (params[:category_id].blank? || params[:category_id] == 'none') ? nil : @project.issue_categories.find_by_id(params[:category_id])
       fixed_version = (params[:fixed_version_id].blank? || params[:fixed_version_id] == 'none') ? nil : @project.shared_versions.find_by_id(params[:fixed_version_id])
+      billable = (params[:billable].blank? || params[:billable] == 'none') ? nil : params[:billable] == "billable"
       custom_field_values = params[:custom_field_values] ? params[:custom_field_values].reject {|k,v| v.blank?} : nil
       
       unsaved_issue_ids = []      
@@ -253,6 +257,7 @@ class IssuesController < ApplicationController
         issue.start_date = params[:start_date] unless params[:start_date].blank?
         issue.due_date = params[:due_date] unless params[:due_date].blank?
         issue.done_ratio = params[:done_ratio] unless params[:done_ratio].blank?
+        issue.billable = billable unless billable.nil?
         issue.custom_field_values = custom_field_values if custom_field_values && !custom_field_values.empty?
         call_hook(:controller_issues_bulk_edit_before_save, { :params => params, :issue => issue })
         # Don't save any change to the issue if the user is not authorized to apply the requested status

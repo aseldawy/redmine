@@ -53,6 +53,22 @@ class TimelogControllerTest < ActionController::TestCase
     )
   end
   
+  def test_edit_xml_routing
+    assert_routing({:method=>:get, :path=>'timelog/edit.xml'},
+      :controller=>'timelog', :action=>'edit', :format=>'xml')
+  end
+  
+  def test_edit_xml
+    assert_difference('Issue.find(1).time_entries.count', 1) do
+      assert_difference('Issue.find(1).spent_hours', 1) do
+        post :edit, {:format=>'xml', :project_id=>'ecookbook', :time_entry=>{
+          :issue_id=>1, :activity_id=>8, :spent_from=>'2009-3-30', :spent_to=>'2009-3-30'},
+          :spent_from_time=>'12:00', :spent_to_time=>'13:00'}, {:user_id=>1}
+        assert_response :success
+      end
+    end
+  end
+  
   def test_get_edit
     @request.session[:user_id] = 3
     get :edit, :project_id => 1
@@ -258,7 +274,7 @@ class TimelogControllerTest < ActionController::TestCase
     # Custom field row
     assert_tag :tag => 'td', :content => 'MySQL',
                              :sibling => { :tag => 'td', :attributes => { :class => 'hours' },
-                                                         :child => { :tag => 'span', :attributes => { :class => 'hours hours-int' },
+                                                         :descendant => { :tag => 'span', :attributes => { :class => 'hours hours-int ' },
                                                                                      :content => '1' }}
     # Second custom field column
     assert_tag :tag => 'th', :content => 'Billable'
@@ -441,5 +457,19 @@ class TimelogControllerTest < ActionController::TestCase
     assert_equal 'text/csv', @response.content_type
     assert @response.body.include?("Date,User,Activity,Project,Issue,Tracker,Subject,Hours,Comment\n")
     assert @response.body.include?("\n04/21/2007,redMine Admin,Design,eCookbook,3,Bug,Error 281 when updating a recipe,1.0,\"\"\n")
+  end
+  
+  def test_activities_xml_route
+    assert_routing({:method=>:get, :path=>'/timelog/activities.xml'},
+      :controller=>'timelog', :action=>'activities', :format=>'xml')
+  end
+  
+  def test_activities_xml
+    get :activities, :format=>'xml'
+    count = 0
+    @response.body.gsub(/\<time-entry-activity\>/) do
+      count += 1
+    end
+    assert_equal count, 3
   end
 end

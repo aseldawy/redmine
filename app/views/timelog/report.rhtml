@@ -12,6 +12,7 @@
   <% end %>
   <%# TODO: get rid of the project_id field, that should already be in the URL %>
   <%= hidden_field_tag('project_id', params[:project_id]) if @project %>
+  <%= hidden_field_tag('user_id', params[:user_id]) if @user %>
   <%= hidden_field_tag('issue_id', params[:issue_id]) if @issue %>
   <%= render :partial => 'date_range' %>
 
@@ -34,7 +35,16 @@
 
 <% unless @criterias.empty? %>
 <div class="total-hours">
-<p><%= l(:label_total) %>: <%= html_hours(l_hours(@total_hours)) %></p>
+<p>
+	<%= l(:label_total) %>: <%= html_hours(l_hours(@total_hours)) %>
+	<span class="billable">(Billable <%= html_hours(l_hours(@total_billable_hours)) %>)</span>
+</p>
+<% if @total_hours > 0 %>
+<p>
+	<% @billable_ratio = @total_billable_hours / @total_hours%>
+	<span style="color: <%=ratio_color(@billable_ratio)%>">Billable ratio <%= "%2.0f%%" % (@billable_ratio * 100)%></span>
+</p>
+<% end %>
 </div>
 
 <% unless @hours.empty? %>
@@ -57,11 +67,19 @@
   <td><%= l(:label_total) %></td>
   <%= '<td></td>' * (@criterias.size - 1) %>
   <% total = 0 -%>
+  <% total_billable = 0 -%>
   <% @periods.each do |period| -%>
     <% sum = sum_hours(select_hours(@hours, @columns, period.to_s)); total += sum -%>
-    <td class="hours"><%= html_hours("%.2f" % sum) if sum > 0 %></td>
+    <% sum_billable = sum_hours(select_hours(@hours, @columns, period.to_s, "1")); total_billable += sum_billable -%>
+    <td class="hours">
+    	<%= html_hours("%.2f" % sum) if sum > 0 %>
+    	<% if sum_billable > 0 %><span class="billable">(<%= html_hours("%.2f" % sum_billable) %>)</span><% end %>
+	</td>
   <% end -%>
-  <td class="hours"><%= html_hours("%.2f" % total) if total > 0 %></td>
+  <td class="hours">
+  	<%= html_hours("%.2f" % total) if total > 0 %>
+	<% if total_billable > 0 %><span class="billable">(<%= html_hours("%.2f" % total_billable) %>)</span><% end %>
+  </td>
   </tr>
 </tbody>
 </table>

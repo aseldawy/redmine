@@ -1,13 +1,38 @@
 <h2><%= l(:label_spent_time) %></h2>
 
-<% labelled_tabular_form_for :time_entry, @time_entry, :url => {:action => 'edit', :id => @time_entry, :project_id => @time_entry.project} do |f| %>
+<% project_id = @time_entry.new_record? ? nil : @time_entry.project.to_param %>
+<% labelled_tabular_form_for :time_entry, @time_entry, :url => {:action => 'edit', :id => @time_entry, :project_id=>project_id} do |f| %>
 <%= error_messages_for 'time_entry' %>
 <%= back_url_hidden_field_tag %>
 
 <div class="box">
-<p><%= f.text_field :issue_id, :size => 6 %> <em><%= h("#{@time_entry.issue.tracker.name} ##{@time_entry.issue.id}: #{@time_entry.issue.subject}") if @time_entry.issue %></em></p>
+<% if @time_entry.new_record? %>
+<p>
+	<%= select_tag :project_id,
+		options_for_select(User.current.projects.sort_by(&:name).collect {|project| [project.name, project.id]}, @time_entry.project_id),
+		{:required=>true}%>
+</p>
+<p><span id="time_entry_issue_id_p"><%= f.select :issue_id, @time_entry.project.issues.collect {|issue| [issue.subject, issue.id]} %></span></p>
+<% else %>
+<p><%= f.text_field :issue_id, :size => 6 %>
+<em><%= h("#{@time_entry.project.name} > ") %></em>
+<%=
+ link_to_if User.current.allowed_to?(:edit_issues, @time_entry.project),
+	"<em>"+ h("#{@time_entry.issue.tracker.name} ##{@time_entry.issue.id}: #{@time_entry.issue.subject}") + "</em>",
+	{:action=>'edit', :controller=>'issues', :id=>@time_entry.issue} if @time_entry.issue
+%>
+</p>
+<% end %>
+<!--
 <p><%= f.text_field :spent_on, :size => 10, :required => true %><%= calendar_for('time_entry_spent_on') %></p>
 <p><%= f.text_field :hours, :size => 6, :required => true %></p>
+-->
+<p><%= f.text_field :spent_from, :value=>@time_entry.spent_from.strftime("%Y-%m-%d"), :size=>10, :required => true %><%= calendar_for('time_entry_spent_from') %>
+<%= text_field_tag 'spent_from_time', @time_entry.spent_from.strftime("%H:%M"), :size=>3 %>
+</p>
+<p><%= f.text_field :spent_to, :value=>@time_entry.spent_to.strftime("%Y-%m-%d"), :size=>10, :required => true %><%= calendar_for('time_entry_spent_to') %>
+<%= text_field_tag 'spent_to_time', @time_entry.spent_to.strftime("%H:%M"), :size=>3 %>
+</p>
 <p><%= f.text_field :comments, :size => 100 %></p>
 <p><%= f.select :activity_id, activity_collection_for_select_options(@time_entry), :required => true %></p>
 <% @time_entry.custom_field_values.each do |value| %>
@@ -17,5 +42,8 @@
 </div>
 
 <%= submit_tag l(:button_save) %>
+<%= observe_field :project_id, :update=>'time_entry_issue_id_p',
+		:url=>{:controller=>'issues', :action=>'index'},
+		:with=>"'project_id='+encodeURIComponent(value)"%>
 
 <% end %>

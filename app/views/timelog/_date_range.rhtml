@@ -26,11 +26,16 @@
 </p>
 
 <div class="tabs">
-<% url_params = @free_period ? { :from => @from, :to => @to } : { :period => params[:period] } %>
+<% url_params = @free_period ? { 'from' => @from, 'to' => @to } : { 'period' => params[:period] } %>
+<% url_params.update params %>
 <ul>
-    <li><%= link_to(l(:label_details), url_params.merge({:controller => 'timelog', :action => 'details', :project_id => @project, :issue_id => @issue }),
-                                       :class => (@controller.action_name == 'details' ? 'selected' : nil)) %></li>
-    <li><%= link_to(l(:label_report), url_params.merge({:controller => 'timelog', :action => 'report', :project_id => @project, :issue_id => @issue}),
+    <li><%= link_to(l(:label_details), url_params.merge({'controller' => 'timelog', 'action' => 'details', 'project_id' => @project, 'view' => nil }),
+                                       :class => (@controller.action_name == 'details' && params[:view] != 'chart' ? 'selected' : nil)) %></li>
+    <li><%= link_to(l(:label_report), url_params.merge({'controller' => 'timelog', 'action' => 'report', 'project_id' => @project, :issue_id => @issue}),
                                        :class => (@controller.action_name == 'report' ? 'selected' : nil)) %></li>
+	<% if params[:user_id] -%>
+	    <li><%= link_to(l(:label_chart), url_params.merge({'controller' => 'timelog', 'action' => 'details', 'project_id' => @project, 'view' => 'chart' }),
+	                                       :class => (@controller.action_name == 'details' && params[:view] == 'chart' ? 'selected' : nil)) %></li>
+	<% end -%>
 </ul>
 </div>

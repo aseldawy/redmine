@@ -97,15 +97,21 @@ class TimelogController < ApplicationController
         sql_condition = "#{TimeEntry.table_name}.issue_id = #{@issue.id}"
       end
 
-      sql = "SELECT #{sql_select}, tyear, tmonth, tweek, spent_on, SUM(hours) AS hours"
+      sql = "SELECT #{sql_select}, tyear, tmonth, tweek, spent_on, billable, SUM(hours) AS hours"
       sql << " FROM #{TimeEntry.table_name}"
       sql << " LEFT JOIN #{Issue.table_name} ON #{TimeEntry.table_name}.issue_id = #{Issue.table_name}.id"
       sql << " LEFT JOIN #{Project.table_name} ON #{TimeEntry.table_name}.project_id = #{Project.table_name}.id"
       sql << " WHERE"
+      if params[:project_id]
+        sql << " (%s) AND" % @project.project_condition(Setting.display_subprojects_issues?) if @project
+      end
+      # Find entries for selected user only
+      sql << " #{TimeEntry.table_name}.user_id = %d AND" % (params[:user_id].blank? ? User.current.id : params[:user_id]) if params[:user_id]
+      sql << " #{Issue.table_name}.billable = 1 AND " if params[:billable] == 'y'
+      sql << " (%s) AND" % Project.allowed_to_condition(User.current, :view_time_entries)
       sql << " (%s) AND" % sql_condition
       sql << " (spent_on BETWEEN '%s' AND '%s')" % [ActiveRecord::Base.connection.quoted_date(@from), ActiveRecord::Base.connection.quoted_date(@to)]
       sql << " GROUP BY #{sql_group_by}, tyear, tmonth, tweek, spent_on"
-      
       @hours = ActiveRecord::Base.connection.select_all(sql)
       
       @hours.each do |row|
@@ -122,12 +128,18 @@ class TimelogController < ApplicationController
       end
       
       @total_hours = @hours.inject(0) {|s,k| s = s + k['hours'].to_f}
+      @total_billable_hours = @hours.inject(0) {|s,k| s += (k['billable'] == "1" ? k['hours'].to_f : 0)}
       
+      @periods_time = []
       @periods = []
       # Date#at_beginning_of_ not supported in Rails 1.2.x
-      date_from = @from.to_time
+      date_from = @from.to_date
       # 100 columns max
-      while date_from <= @to.to_time && @periods.length < 100
+      while date_from <= @to.to_date && @periods.length < 100
+        if !@periods_time.empty?
+          @periods_time.last[:date_to] = date_from.yesterday
+        end
+        @periods_time << {:date_from=>date_from}
         case @columns
         when 'year'
           @periods << "#{date_from.year}"
@@ -143,6 +155,7 @@ class TimelogController < ApplicationController
           date_from = date_from + 1.day
         end
       end
+      @periods_time.last[:date_to] = date_from.yesterday
     end
     
     respond_to do |format|
@@ -152,8 +165,8 @@ class TimelogController < ApplicationController
   end
   
   def details
-    sort_init 'spent_on', 'desc'
-    sort_update 'spent_on' => 'spent_on',
+    sort_init 'spent_from', 'desc'
+    sort_update 'spent_from' => 'spent_from',
                 'user' => 'user_id',
                 'activity' => 'activity_id',
                 'project' => "#{Project.table_name}.name",
@@ -169,24 +182,54 @@ class TimelogController < ApplicationController
       cond << ["#{TimeEntry.table_name}.issue_id = ?", @issue.id]
     end
     
+    # Find entries for selected user only
+    if params[:user_id]
+      cond << ["#{TimeEntry.table_name}.user_id = ?", (params[:user_id].blank? ? User.current.id : params[:user_id])]
+    end
+    
+    if !params[:project_id].blank?
+      cond << [@project.project_condition(Setting.display_subprojects_issues?)] if @project
+    end
+    
     retrieve_date_range
     cond << ['spent_on BETWEEN ? AND ?', @from, @to]
 
     TimeEntry.visible_by(User.current) do
       respond_to do |format|
         format.html {
-          # Paginate results
-          @entry_count = TimeEntry.count(:include => :project, :conditions => cond.conditions)
-          @entry_pages = Paginator.new self, @entry_count, per_page_option, params['page']
-          @entries = TimeEntry.find(:all, 
-                                    :include => [:project, :activity, :user, {:issue => :tracker}],
-                                    :conditions => cond.conditions,
-                                    :order => sort_clause,
-                                    :limit  =>  @entry_pages.items_per_page,
-                                    :offset =>  @entry_pages.current.offset)
-          @total_hours = TimeEntry.sum(:hours, :include => :project, :conditions => cond.conditions).to_f
-
-          render :layout => !request.xhr?
+          if params[:view] == 'chart' && params[:user_id]
+            entries = TimeEntry.find(:all, 
+                                      :include => [:project, :activity, :user, {:issue => :tracker}],
+                                      :conditions => cond.conditions, :order=>'spent_from')
+            @entries_by_day = entries.group_by(&:spent_on)
+            @min_hour = 25
+            @max_hour = 0
+            @entries_by_day.each do |day, entries|
+              @min_hour = entries.first.spent_from.hour if entries.first.spent_from.hour < @min_hour
+              @max_hour = entries.last.spent_to.hour if entries.last.spent_to.hour > @max_hour
+            end
+            logger.info "-------------------"
+            logger.info entries.collect(&:spent_on).inspect
+            logger.info @entries_by_day.collect(&:first).inspect
+            logger.info "-------------------"
+            @max_hour = @min_hour + 7 if @max_hour < @min_hour + 7
+            @max_hour += 1
+            @total_hours = TimeEntry.sum(:hours, :include => :project, :conditions => cond.conditions).to_f
+            render :layout => !request.xhr?
+          else
+            # Paginate results
+            @entry_count = TimeEntry.count(:include => :project, :conditions => cond.conditions)
+            @entry_pages = Paginator.new self, @entry_count, per_page_option, params['page']
+            @entries = TimeEntry.find(:all, 
+                                      :include => [:project, :activity, :user, {:issue => :tracker}],
+                                      :conditions => cond.conditions,
+                                      :order => sort_clause,
+                                      :limit  =>  @entry_pages.items_per_page,
+                                      :offset =>  @entry_pages.current.offset)
+            @total_hours = TimeEntry.sum(:hours, :include => :project, :conditions => cond.conditions).to_f
+  
+            render :layout => !request.xhr?
+          end
         }
         format.atom {
           entries = TimeEntry.find(:all,
@@ -210,14 +253,23 @@ class TimelogController < ApplicationController
   
   def edit
     (render_403; return) if @time_entry && !@time_entry.editable_by?(User.current)
-    @time_entry ||= TimeEntry.new(:project => @project, :issue => @issue, :user => User.current, :spent_on => User.current.today)
+    # Adjust time_spent_from and time_spent_to according to the passed parameters
+    if params[:time_entry]
+      params[:time_entry][:spent_from] << ' ' << params[:spent_from_time] if params[:time_entry][:spent_from] && params[:spent_from_time]
+      params[:time_entry][:spent_to] << ' ' << params[:spent_to_time] if params[:time_entry][:spent_to] && params[:spent_to_time]
+    end
+    @time_entry ||= TimeEntry.new(:project => @project, :issue => @issue, :user => User.current, :spent_from => Date.today, :spent_to=>Date.today)
     @time_entry.attributes = params[:time_entry]
     
     call_hook(:controller_timelog_edit_before_save, { :params => params, :time_entry => @time_entry })
     
     if request.post? and @time_entry.save
       flash[:notice] = l(:notice_successful_update)
-      redirect_back_or_default :action => 'details', :project_id => @time_entry.project
+      # respond to according to format
+      respond_to do |format|
+        format.html { redirect_back_or_default :action => 'details', :project_id => @time_entry.project }
+        format.xml  { render :xml => @time_entry }
+      end
       return
     end    
   end
@@ -231,9 +283,18 @@ class TimelogController < ApplicationController
   rescue ::ActionController::RedirectBackError
     redirect_to :action => 'details', :project_id => @time_entry.project
   end
+  
+  def activities
+    actt = TimeEntryActivity.all
+    respond_to do |format|
+      format.xml { render :xml => actt.to_xml(:except => :opt) }
+    end
+  end
 
 private
   def find_project
+    @projects = Project.find :all,
+                            :conditions => Project.visible_by(User.current)
     if params[:id]
       @time_entry = TimeEntry.find(params[:id])
       @project = @time_entry.project
@@ -242,6 +303,8 @@ private
       @project = @issue.project
     elsif params[:project_id]
       @project = Project.find(params[:project_id])
+    elsif ! @projects.empty?
+      @project = @projects.first
     else
       render_404
       return false

@@ -371,6 +371,7 @@ class Issue < ActiveRecord::Base
     s << ' overdue' if overdue?
     s << ' created-by-me' if User.current.logged? && author_id == User.current.id
     s << ' assigned-to-me' if User.current.logged? && assigned_to_id == User.current.id
+    s << (billable ? ' billable' : ' non-billable')
     s
   end
 

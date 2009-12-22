@@ -216,6 +216,7 @@ en:
   field_assigned_to: Assigned to
   field_priority: Priority
   field_fixed_version: Target version
+  field_billable: Billable
   field_user: User
   field_role: Role
   field_homepage: Homepage
@@ -252,6 +253,8 @@ en:
   field_subproject: Subproject
   field_hours: Hours
   field_activity: Activity
+  field_spent_from: Start at
+  field_spent_to: End at
   field_spent_on: Date
   field_identifier: Identifier
   field_is_filter: Used as a filter
@@ -525,6 +528,7 @@ en:
   label_previous: Previous
   label_used_by: Used by
   label_details: Details
+  label_chart: Chart
   label_add_note: Add a note
   label_per_page: Per page
   label_calendar: Calendar
@@ -743,6 +747,7 @@ en:
   button_change: Change
   button_apply: Apply
   button_clear: Clear
+  button_mark_completed: Mark completed
   button_lock: Lock
   button_unlock: Unlock
   button_download: Download

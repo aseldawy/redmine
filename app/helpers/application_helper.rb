@@ -252,8 +252,11 @@ module ApplicationHelper
     truncate(string.to_s, *args).gsub(%r{[\r\n]+}m, ' ')
   end
 
-  def html_hours(text)
-    text.gsub(%r{(\d+)\.(\d+)}, '<span class="hours hours-int">\1</span><span class="hours hours-dec">.\2</span>')
+  def html_hours(text, html_class='')
+    if text.is_a?Float
+      return l_hours(text)
+    end
+    text.gsub(%r{(\d+)([\.:])(\d+)}, '<span class="hours hours-int '+html_class+'">\1</span><span class="hours hours-dec '+html_class+'">\2\3</span>')
   end
 
   def authoring(created, author, options={})

@@ -6,11 +6,23 @@
 <td><%= h(format_criteria_value(criterias[level], value)) %></td>
 <%= '<td></td>' * (criterias.length - level - 1) -%>
   <% total = 0 -%>
-  <% @periods.each do |period| -%>
+  <% total_billable = 0 -%>
+  <% @periods.each_with_index do |period, i| -%>
     <% sum = sum_hours(select_hours(hours_for_value, @columns, period.to_s)); total += sum -%>
-    <td class="hours"><%= html_hours("%.2f" % sum) if sum > 0 %></td>
+    <% sum_billable = sum_hours(select_hours(hours_for_value, @columns, period.to_s, "1")); total_billable += sum_billable -%>
+    <td class="hours">
+    	<% link_url = url_for_time_details(hours_for_value, criterias, level, value, @periods_time, i)%>
+    	<%= link_to(html_hours("%.2f" % sum), link_url) if sum > 0 %>
+    	<% if sum_billable > 0 %>
+    	<% link_url = url_for_time_details(hours_for_value, criterias, level, value, @periods_time, i, :billable=>'Y')%>
+		(<%= link_to(html_hours("%.2f" % sum_billable, 'billable'), link_url) %>)
+		<% end %>
+	</td>
   <% end -%>
-  <td class="hours"><%= html_hours("%.2f" % total) if total > 0 %></td>
+  <td class="hours">
+  	<%= html_hours("%.2f" % total) if total > 0 %>
+	<% if total_billable > 0 %><span class="billable">(<%= html_hours("%.2f" % total_billable) %>)</span><% end %>
+  </td>
 </tr>
 <% if criterias.length > level+1 -%>
   <%= render(:partial => 'report_criteria', :locals => {:criterias => criterias, :hours => hours_for_value, :level => (level + 1)}) %>

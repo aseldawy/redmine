@@ -59,6 +59,45 @@ class ProjectsControllerTest < ActionController::TestCase
     assert_no_tag :a, :content => /Private child of eCookbook/
   end
   
+  def test_anonymous_gets_public_projects_only
+    get :index
+    assert_equal assigns(:projects).size, Project.find_all_by_is_public(true).size
+  end
+  
+  def test_index_xml_routing
+    assert_routing({:method=>:get, :path=>'/projects.xml'},
+      :controller=>'projects', :action=>'index', :format=>'xml')
+  end
+  
+  def test_index_xml_public
+    get :index, :format=>'xml'
+    count = 0
+    @response.body.gsub(/\<project\>/) do
+      count += 1
+    end
+    assert_equal 4, count
+  end
+
+  def test_index_xml_admin
+    @request.session[:user_id] = 1
+    get :index, :format=>'xml'
+    count = 0
+    @response.body.gsub(/\<project\>/) do
+      count += 1
+    end
+    assert_equal 4, count
+  end
+
+  def test_index_xml_member
+    @request.session[:user_id] = 2
+    get :index, :format=>'xml'
+    count = 0
+    @response.body.gsub(/\<project\>/) do
+      count += 1
+    end
+    assert_equal 6, count
+  end
+
   def test_index_atom_routing
     assert_routing(
       {:method => :get, :path => '/projects.atom'},
