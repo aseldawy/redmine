@@ -29,6 +29,8 @@ class TimelogController < ApplicationController
   helper :custom_fields
   include CustomFieldsHelper
   
+  skip_before_filter :verify_authenticity_token, :only=>'edit'
+  
   def report
     @available_criterias = { 'project' => {:sql => "#{TimeEntry.table_name}.project_id",
                                           :klass => Project,

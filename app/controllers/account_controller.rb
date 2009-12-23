@@ -21,6 +21,7 @@ class AccountController < ApplicationController
   
   # prevents login action to be filtered by check_if_login_required application scope filter
   skip_before_filter :check_if_login_required
+  skip_before_filter :verify_authenticity_token
 
   # Login request and validation
   def login
