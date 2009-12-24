@@ -43,7 +43,7 @@
 
 <%= submit_tag l(:button_save) %>
 <%= observe_field :project_id, :update=>'time_entry_issue_id_p',
-		:url=>{:controller=>'issues', :action=>'index'},
+		:url=>{:controller=>'issues', :action=>'index', :for_select=>true},
 		:with=>"'project_id='+encodeURIComponent(value)"%>
 
 <% end %>
