@@ -9,7 +9,7 @@
 <% if @time_entry.new_record? %>
 <p>
 	<%= select_tag :project_id,
-		options_for_select(Project.visible.find(:all, :order=>'lft').collect {|project| [project.name, project.id]}, @time_entry.project_id),
+		options_for_select(@projects.collect {|project| [project.name, project.id]}, @time_entry.project_id),
 		{:required=>true}%>
 </p>
 <p><span id="time_entry_issue_id_p"><%= f.select :issue_id, @time_entry.project.issues.collect {|issue| [issue.subject, issue.id]} %></span></p>

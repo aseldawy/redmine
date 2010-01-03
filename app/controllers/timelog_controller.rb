@@ -255,6 +255,7 @@ class TimelogController < ApplicationController
   
   def edit
     (render_403; return) if @time_entry && !@time_entry.editable_by?(User.current)
+    @projects = Project.visible.find(:all, :order=>'lft', :conditions=>Project.allowed_to_condition(User.current, :log_time))
     # Adjust time_spent_from and time_spent_to according to the passed parameters
     if params[:time_entry]
       params[:time_entry][:spent_from] << ' ' << params[:spent_from_time] if params[:time_entry][:spent_from] && params[:spent_from_time]
