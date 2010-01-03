@@ -84,7 +84,7 @@ class TimelogController < ApplicationController
     
     @columns = (params[:columns] && %w(year month week day).include?(params[:columns])) ? params[:columns] : 'month'
     
-    retrieve_date_range
+    retrieve_date_range(:all_status=>true)
     
     unless @criterias.empty?
       sql_select = @criterias.collect{|criteria| @available_criterias[criteria][:sql] + " AS " + criteria}.join(', ')
@@ -92,7 +92,7 @@ class TimelogController < ApplicationController
       sql_condition = ''
       
       if @project.nil?
-        sql_condition = Project.allowed_to_condition(User.current, :view_time_entries)
+        sql_condition = Project.allowed_to_condition(User.current, :view_time_entries, :all_status=>true)
       elsif @issue.nil?
         sql_condition = @project.project_condition(Setting.display_subprojects_issues?)
       else
@@ -110,10 +110,10 @@ class TimelogController < ApplicationController
       # Find entries for selected user only
       sql << " #{TimeEntry.table_name}.user_id = %d AND" % (params[:user_id].blank? ? User.current.id : params[:user_id]) if params[:user_id]
       sql << " #{Issue.table_name}.billable = 1 AND " if params[:billable] == 'y'
-      sql << " (%s) AND" % Project.allowed_to_condition(User.current, :view_time_entries)
+      sql << " (%s) AND" % Project.allowed_to_condition(User.current, :view_time_entries, :all_status=>true)
       sql << " (%s) AND" % sql_condition
       sql << " (spent_on BETWEEN '%s' AND '%s')" % [ActiveRecord::Base.connection.quoted_date(@from), ActiveRecord::Base.connection.quoted_date(@to)]
-      sql << " GROUP BY #{sql_group_by}, tyear, tmonth, tweek, spent_on"
+      sql << " GROUP BY #{sql_group_by}, tyear, tmonth, tweek, spent_on, billable"
       @hours = ActiveRecord::Base.connection.select_all(sql)
       
       @hours.each do |row|
@@ -326,7 +326,7 @@ private
   end
   
   # Retrieves the date range based on predefined ranges or specific from/to param dates
-  def retrieve_date_range
+  def retrieve_date_range(options={})
     @free_period = false
     @from, @to = nil, nil
 
@@ -367,7 +367,7 @@ private
     end
     
     @from, @to = @to, @from if @from && @to && @from > @to
-    @from ||= (TimeEntry.minimum(:spent_on, :include => :project, :conditions => Project.allowed_to_condition(User.current, :view_time_entries)) || Date.today) - 1
-    @to   ||= (TimeEntry.maximum(:spent_on, :include => :project, :conditions => Project.allowed_to_condition(User.current, :view_time_entries)) || Date.today)
+    @from ||= (TimeEntry.minimum(:spent_on, :include => :project, :conditions => Project.allowed_to_condition(User.current, :view_time_entries, options)) || Date.today) - 1
+    @to   ||= (TimeEntry.maximum(:spent_on, :include => :project, :conditions => Project.allowed_to_condition(User.current, :view_time_entries, options)) || Date.today)
   end
 end
