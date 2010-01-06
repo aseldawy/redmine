@@ -32,6 +32,9 @@ class TimelogController < ApplicationController
   skip_before_filter :verify_authenticity_token, :only=>'edit'
   
   def report
+    if params[:user_id]
+      @user = (params[:user_id].blank? ? User.current : User.find(params[:user_id]))
+    end
     @available_criterias = { 'project' => {:sql => "#{TimeEntry.table_name}.project_id",
                                           :klass => Project,
                                           :label => :label_project},
@@ -108,7 +111,7 @@ class TimelogController < ApplicationController
         sql << " (%s) AND" % @project.project_condition(Setting.display_subprojects_issues?) if @project
       end
       # Find entries for selected user only
-      sql << " #{TimeEntry.table_name}.user_id = %d AND" % (params[:user_id].blank? ? User.current.id : params[:user_id]) if params[:user_id]
+      sql << " #{TimeEntry.table_name}.user_id = %d AND" % @user.id if @user
       sql << " #{Issue.table_name}.billable = 1 AND " if params[:billable] == 'y'
       sql << " (%s) AND" % Project.allowed_to_condition(User.current, :view_time_entries, :all_status=>true)
       sql << " (%s) AND" % sql_condition
@@ -167,6 +170,9 @@ class TimelogController < ApplicationController
   end
   
   def details
+    if params[:user_id]
+      @user = (params[:user_id].blank? ? User.current : User.find(params[:user_id]))
+    end
     sort_init 'spent_from', 'desc'
     sort_update 'spent_from' => 'spent_from',
                 'user' => 'user_id',
@@ -185,9 +191,7 @@ class TimelogController < ApplicationController
     end
     
     # Find entries for selected user only
-    if params[:user_id]
-      cond << ["#{TimeEntry.table_name}.user_id = ?", (params[:user_id].blank? ? User.current.id : params[:user_id])]
-    end
+    cond << ["#{TimeEntry.table_name}.user_id = ?", @user] if @user
     
     if !params[:project_id].blank?
       cond << [@project.project_condition(Setting.display_subprojects_issues?)] if @project

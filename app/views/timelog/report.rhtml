@@ -12,7 +12,7 @@
   <% end %>
   <%# TODO: get rid of the project_id field, that should already be in the URL %>
   <%= hidden_field_tag('project_id', params[:project_id]) if @project %>
-  <%= hidden_field_tag('user_id', params[:user_id]) if @user %>
+  <%= hidden_field_tag('user_id', @user.id) if @user %>
   <%= hidden_field_tag('issue_id', params[:issue_id]) if @issue %>
   <%= render :partial => 'date_range' %>
 
