@@ -25,7 +25,8 @@ class IssueTest < ActiveSupport::TestCase
            :enumerations,
            :issues,
            :custom_fields, :custom_fields_projects, :custom_fields_trackers, :custom_values,
-           :time_entries
+           :time_entries,
+           :enabled_modules
 
   def test_create
     issue = Issue.new(:project_id => 1, :tracker_id => 1, :author_id => 3, :status_id => 1, :priority => IssuePriority.all.first, :subject => 'test_create', :description => 'IssueTest#test_create', :estimated_hours => '1:30')
@@ -206,7 +207,7 @@ class IssueTest < ActiveSupport::TestCase
   
   def test_category_based_assignment
     issue = Issue.create(:project_id => 1, :tracker_id => 1, :author_id => 3, :status_id => 1, :priority => IssuePriority.all.first, :subject => 'Assignment test', :description => 'Assignment test', :category_id => 1)
-    assert_equal IssueCategory.find(1).assigned_to, issue.assigned_to
+    assert_equal [IssueCategory.find(1).assigned_to], issue.assigned_to
   end
   
   def test_copy
@@ -418,8 +419,8 @@ class IssueTest < ActiveSupport::TestCase
       end
 
       should "allow assigned_to changes" do
-        @copy = @issue.move_to(Project.find(3), Tracker.find(2), {:copy => true, :attributes => {:assigned_to_id => 3}})
-        assert_equal 3, @copy.assigned_to_id
+        @copy = @issue.move_to(Project.find(3), Tracker.find(2), {:copy => true, :attributes => {:assigned_to => [User.find(3)]}})
+        assert_equal [User.find(3)], @copy.assigned_to
       end
 
       should "allow status changes" do

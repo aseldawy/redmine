@@ -39,7 +39,7 @@ class Mailer < ActionMailer::Base
     redmine_headers 'Project' => issue.project.identifier,
                     'Issue-Id' => issue.id,
                     'Issue-Author' => issue.author.login
-    redmine_headers 'Issue-Assignee' => issue.assigned_to.login if issue.assigned_to
+    redmine_headers 'Issue-Assignee' => issue.assigned_to.map(&:login).join(', ')
     message_id issue
     recipients issue.recipients
     cc(issue.watcher_recipients - @recipients)
@@ -59,7 +59,7 @@ class Mailer < ActionMailer::Base
     redmine_headers 'Project' => issue.project.identifier,
                     'Issue-Id' => issue.id,
                     'Issue-Author' => issue.author.login
-    redmine_headers 'Issue-Assignee' => issue.assigned_to.login if issue.assigned_to
+    redmine_headers 'Issue-Assignee' => issue.assigned_to.map(&:login).join(', ')
     message_id journal
     references issue
     @author = journal.user
@@ -298,14 +298,21 @@ class Mailer < ActionMailer::Base
     tracker = options[:tracker] ? Tracker.find(options[:tracker]) : nil
 
     s = ARCondition.new ["#{IssueStatus.table_name}.is_closed = ? AND #{Issue.table_name}.due_date <= ?", false, days.day.from_now.to_date]
-    s << "#{Issue.table_name}.assigned_to_id IS NOT NULL"
     s << "#{Project.table_name}.status = #{Project::STATUS_ACTIVE}"
     s << "#{Issue.table_name}.project_id = #{project.id}" if project
     s << "#{Issue.table_name}.tracker_id = #{tracker.id}" if tracker
 
-    issues_by_assignee = Issue.find(:all, :include => [:status, :assigned_to, :project, :tracker],
+    result = Issue.find(:all, :include => [:status, :assigned_to, :project, :tracker],
                                           :conditions => s.conditions
-                                    ).group_by(&:assigned_to)
+                                    )
+    issues_by_assignee = {}
+    result.each do |issue|
+      issue.assigned_to.each do |assignee|
+        issues_by_assignee[assignee] = [] unless issues_by_assignee[assignee]
+        issues_by_assignee[assignee] << issue
+      end
+    end
+
     issues_by_assignee.each do |assignee, issues|
       deliver_reminder(assignee, issues, days) unless assignee.nil?
     end

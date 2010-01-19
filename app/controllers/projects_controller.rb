@@ -59,7 +59,7 @@ class ProjectsController < ApplicationController
         render_feed(projects, :title => "#{Setting.app_title}: #{l(:label_project_latest)}")
       }
       format.xml  {
-        @projects = Project.visible.find(:all, :order=>'lft', :conditions=>Project.allowed_to_condition(User.current, :log_time))
+        @projects = User.current.projects
         render :xml => @projects
       }
     end

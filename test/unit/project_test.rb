@@ -558,7 +558,7 @@ class ProjectTest < ActiveSupport::TestCase
       @source_project.issues << Issue.generate!(:status_id => 5,
                                                 :subject => "copy issue status",
                                                 :tracker_id => 1,
-                                                :assigned_to_id => 2,
+                                                :assigned_to => [User.find(2)],
                                                 :project_id => @source_project.id)
       assert @project.valid?
       assert @project.issues.empty?
@@ -604,7 +604,7 @@ class ProjectTest < ActiveSupport::TestCase
       second_issue = Issue.generate!(:status_id => 5,
                                      :subject => "copy issue relation",
                                      :tracker_id => 1,
-                                     :assigned_to_id => 2,
+                                     :assigned_to => [User.find(2)],
                                      :project_id => @source_project.id)
       source_relation = IssueRelation.generate!(:issue_from => Issue.find(4),
                                                 :issue_to => second_issue,

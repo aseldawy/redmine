@@ -17,10 +17,10 @@
 
 class Issue < ActiveRecord::Base
   belongs_to :project
-  belongs_to :tracker
+  belongs_to :tracker # Bug, Issue ... etc.
   belongs_to :status, :class_name => 'IssueStatus', :foreign_key => 'status_id'
   belongs_to :author, :class_name => 'User', :foreign_key => 'author_id'
-  belongs_to :assigned_to, :class_name => 'User', :foreign_key => 'assigned_to_id'
+  has_and_belongs_to_many :assigned_to, :class_name=>'User' 
   belongs_to :fixed_version, :class_name => 'Version', :foreign_key => 'fixed_version_id'
   belongs_to :priority, :class_name => 'IssuePriority', :foreign_key => 'priority_id'
   belongs_to :category, :class_name => 'IssueCategory', :foreign_key => 'category_id'
@@ -82,6 +82,7 @@ class Issue < ActiveRecord::Base
   def copy_from(arg)
     issue = arg.is_a?(Issue) ? arg : Issue.find(arg)
     self.attributes = issue.attributes.dup.except("id", "created_on", "updated_on")
+    self.assigned_to = issue.assigned_to
     self.custom_values = issue.custom_values.collect {|v| v.clone}
     self.status = issue.status
     self
@@ -165,11 +166,11 @@ class Issue < ActiveRecord::Base
     write_attribute :estimated_hours, (h.is_a?(String) ? h.to_hours : h)
   end
   
+#    assigned_to_id
   SAFE_ATTRIBUTES = %w(
     tracker_id
     status_id
     category_id
-    assigned_to_id
     priority_id
     fixed_version_id
     subject
@@ -238,8 +239,8 @@ class Issue < ActiveRecord::Base
   
   def before_create
     # default assignment based on category
-    if assigned_to.nil? && category && category.assigned_to
-      self.assigned_to = category.assigned_to
+    if assigned_to.empty? && category && category.assigned_to
+      self.assigned_to << category.assigned_to
     end
   end
   
@@ -333,7 +334,7 @@ class Issue < ActiveRecord::Base
     notified = project.notified_users
     # Author and assignee are always notified unless they have been locked
     notified << author if author && author.active?
-    notified << assigned_to if assigned_to && assigned_to.active?
+    notified += assigned_to.select {|u| u.active? }
     notified.uniq!
     # Remove users that can not view the issue
     notified.reject! {|user| !visible?(user)}
@@ -396,7 +397,7 @@ class Issue < ActiveRecord::Base
     s << ' closed' if closed?
     s << ' overdue' if overdue?
     s << ' created-by-me' if User.current.logged? && author_id == User.current.id
-    s << ' assigned-to-me' if User.current.logged? && assigned_to_id == User.current.id
+    s << ' assigned-to-me' if User.current.logged? && assigned_to.include?(User.current)
     s << (billable ? ' billable' : ' non-billable')
     s
   end

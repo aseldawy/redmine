@@ -124,7 +124,7 @@ class Query < ActiveRecord::Base
     QueryColumn.new(:priority, :sortable => "#{IssuePriority.table_name}.position", :default_order => 'desc', :groupable => true),
     QueryColumn.new(:subject, :sortable => "#{Issue.table_name}.subject"),
     QueryColumn.new(:author),
-    QueryColumn.new(:assigned_to, :sortable => ["#{User.table_name}.lastname", "#{User.table_name}.firstname", "#{User.table_name}.id"], :groupable => true),
+    QueryColumn.new(:assigned_to, :sortable => ["#{User.table_name}.lastname", "#{User.table_name}.firstname", "#{User.table_name}.id"], :groupable => 'issues_users.user_id'),
     QueryColumn.new(:updated_on, :sortable => "#{Issue.table_name}.updated_on", :default_order => 'desc'),
     QueryColumn.new(:category, :sortable => "#{IssueCategory.table_name}.name", :groupable => true),
     QueryColumn.new(:fixed_version, :sortable => ["#{Version.table_name}.effective_date", "#{Version.table_name}.name"], :default_order => 'desc', :groupable => true),
@@ -421,11 +421,18 @@ class Query < ActiveRecord::Base
     if grouped?
       begin
         # Rails will raise an (unexpected) RecordNotFound if there's only a nil group value
-        r = Issue.count(:group => group_by_statement, :include => [:status, :project], :conditions => statement)
+        r = Issue.count(:group => group_by_statement, :include => [:status, :project, :assigned_to], :conditions => statement)
       rescue ActiveRecord::RecordNotFound
         r = {nil => issue_count}
       end
       c = group_by_column
+      if c.name == :assigned_to
+        r2 = {}
+        r.each do |k, v|
+          r2[k.nil?? k : User.find(k)] = v
+        end
+        r = r2
+      end
       if c.is_a?(QueryCustomFieldColumn)
         r = r.keys.inject({}) {|h, k| h[c.custom_field.cast_value(k)] = r[k]; h}
       end
