@@ -166,13 +166,13 @@ class Issue < ActiveRecord::Base
     write_attribute :estimated_hours, (h.is_a?(String) ? h.to_hours : h)
   end
   
-#    assigned_to_id
   SAFE_ATTRIBUTES = %w(
     tracker_id
     status_id
     category_id
     priority_id
     fixed_version_id
+    assigned_to_ids
     subject
     description
     start_date
@@ -452,7 +452,7 @@ class Issue < ActiveRecord::Base
   def create_journal
     if @current_journal
       # attributes changes
-      (Issue.column_names - %w(id description lock_version created_on updated_on)).each {|c|
+      (Issue.column_names - %w(id description lock_version created_on updated_on) + ['assigned_to_ids']).each {|c|
         @current_journal.details << JournalDetail.new(:property => 'attr',
                                                       :prop_key => c,
                                                       :old_value => @issue_before_change.send(c),

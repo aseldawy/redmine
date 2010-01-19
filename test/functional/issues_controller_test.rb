@@ -819,7 +819,7 @@ class IssuesControllerTest < ActionController::TestCase
     assert_difference('TimeEntry.count', 0) do
       post :edit,
            :id => 1,
-           :issue => { :status_id => 2, :assigned_to_id => 3 },
+           :issue => { :status_id => 2, :assigned_to_ids => [3] },
            :notes => 'Assigned to dlopper',
            :time_entry => { :hours => '', :comments => '', :activity_id => TimeEntryActivity.first }
     end
@@ -1046,10 +1046,10 @@ class IssuesControllerTest < ActionController::TestCase
     assert_not_nil Issue.find(2).assigned_to
     @request.session[:user_id] = 2
     # unassign issues
-    post :bulk_edit, :ids => [1, 2], :notes => 'Bulk unassigning', :assigned_to_id => 'none'
+    post :bulk_edit, :ids => [1, 2], :notes => 'Bulk unassigning', :assigned_to_ids => 'none'
     assert_response 302
     # check that the issues were updated
-    assert_nil Issue.find(2).assigned_to
+    assert Issue.find(2).assigned_to.empty?
   end
   
   def test_post_bulk_edit_should_allow_fixed_version_to_be_set_to_a_subproject
@@ -1127,20 +1127,20 @@ class IssuesControllerTest < ActionController::TestCase
       issue_before_move = Issue.find(1)
       assert_difference 'Issue.count', 1 do
         assert_no_difference 'Project.find(1).issues.count' do
-          post :move, :ids => [1], :new_project_id => 2, :copy_options => {:copy => '1'}, :new_tracker_id => '', :assigned_to_id => '', :status_id => '', :start_date => '', :due_date => ''
+          post :move, :ids => [1], :new_project_id => 2, :copy_options => {:copy => '1'}, :new_tracker_id => '', :assigned_to_ids => '', :status_id => '', :start_date => '', :due_date => ''
         end
       end
       issue_after_move = Issue.first(:order => 'id desc', :conditions => {:project_id => 2})
       assert_equal issue_before_move.tracker_id, issue_after_move.tracker_id
       assert_equal issue_before_move.status_id, issue_after_move.status_id
-      assert_equal issue_before_move.assigned_to_id, issue_after_move.assigned_to_id
+      assert_equal issue_before_move.assigned_to_ids, issue_after_move.assigned_to_ids
     end
     
     should "allow changing the issue's attributes" do
       @request.session[:user_id] = 2
       assert_difference 'Issue.count', 2 do
         assert_no_difference 'Project.find(1).issues.count' do
-          post :move, :ids => [1, 2], :new_project_id => 2, :copy_options => {:copy => '1'}, :new_tracker_id => '', :assigned_to_id => 4, :status_id => 3, :start_date => '2009-12-01', :due_date => '2009-12-31'
+          post :move, :ids => [1, 2], :new_project_id => 2, :copy_options => {:copy => '1'}, :new_tracker_id => '', :assigned_to_ids => [4], :status_id => 3, :start_date => '2009-12-01', :due_date => '2009-12-31'
         end
       end
 
@@ -1148,7 +1148,7 @@ class IssuesControllerTest < ActionController::TestCase
       assert_equal 2, copied_issues.size
       copied_issues.each do |issue|
         assert_equal 2, issue.project_id, "Project is incorrect"
-        assert_equal 4, issue.assigned_to_id, "Assigned to is incorrect"
+        assert_equal [4], issue.assigned_to_ids, "Assigned to is incorrect"
         assert_equal 3, issue.status_id, "Status is incorrect"
         assert_equal '2009-12-01', issue.start_date.to_s, "Start date is incorrect"
         assert_equal '2009-12-31', issue.due_date.to_s, "Due date is incorrect"

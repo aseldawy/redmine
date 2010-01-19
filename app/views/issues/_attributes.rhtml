@@ -8,7 +8,10 @@
 <% end %>
 
 <p><%= f.select :priority_id, (@priorities.collect {|p| [p.name, p.id]}), :required => true %></p>
-<p><%= f.select :assigned_to_id, (@issue.assignable_users.collect {|m| [m.name, m.id]}), :include_blank => true %></p>
+<% @issue.assigned_to_ids.each do |assigned_to_id| -%>
+<p><%= select_tag 'issue[assigned_to_ids][]', options_for_select(@issue.assignable_users.collect {|m| [m.name, m.id]}, assigned_to_id) %></p>
+<% end -%>
+<p><%= select_tag 'issue[assigned_to_ids][]', options_for_select(@issue.assignable_users.collect {|m| [m.name, m.id]}) %></p>
 <% unless @project.issue_categories.empty? %>
 <p><%= f.select :category_id, (@project.issue_categories.collect {|c| [c.name, c.id]}), :include_blank => true %>
 <%= prompt_to_remote(image_tag('add.png', :style => 'vertical-align: middle;'),

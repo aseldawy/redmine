@@ -270,7 +270,7 @@ class IssuesController < ApplicationController
       tracker = params[:tracker_id].blank? ? nil : @project.trackers.find_by_id(params[:tracker_id])
       status = params[:status_id].blank? ? nil : IssueStatus.find_by_id(params[:status_id])
       priority = params[:priority_id].blank? ? nil : IssuePriority.find_by_id(params[:priority_id])
-      assigned_to = (params[:assigned_to_id].blank? || params[:assigned_to_id] == 'none') ? nil : User.find_by_id(params[:assigned_to_id])
+      assigned_to_ids = (params[:assigned_to_ids].blank? || params[:assigned_to_ids] == 'none') ? [] : params[:assigned_to_id]
       category = (params[:category_id].blank? || params[:category_id] == 'none') ? nil : @project.issue_categories.find_by_id(params[:category_id])
       fixed_version = (params[:fixed_version_id].blank? || params[:fixed_version_id] == 'none') ? nil : @project.shared_versions.find_by_id(params[:fixed_version_id])
       billable = (params[:billable].blank? || params[:billable] == 'none') ? nil : params[:billable] == "billable"
@@ -281,7 +281,7 @@ class IssuesController < ApplicationController
         journal = issue.init_journal(User.current, params[:notes])
         issue.tracker = tracker if tracker
         issue.priority = priority if priority
-        issue.assigned_to = assigned_to if assigned_to || params[:assigned_to_id] == 'none'
+        issue.assigned_to_ids = assigned_to_ids if params[:assigned_to_ids]
         issue.category = category if category || params[:category_id] == 'none'
         issue.fixed_version = fixed_version if fixed_version || params[:fixed_version_id] == 'none'
         issue.start_date = params[:start_date] unless params[:start_date].blank?
@@ -330,7 +330,7 @@ class IssuesController < ApplicationController
       moved_issues = []
       @issues.each do |issue|
         changed_attributes = {}
-        [:assigned_to_id, :status_id, :start_date, :due_date].each do |valid_attribute|
+        [:assigned_to_ids, :status_id, :start_date, :due_date].each do |valid_attribute|
           unless params[valid_attribute].blank?
             changed_attributes[valid_attribute] = (params[valid_attribute] == 'none' ? nil : params[valid_attribute])
           end

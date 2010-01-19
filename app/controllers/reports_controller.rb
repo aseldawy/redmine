@@ -160,10 +160,11 @@ private
                                                   a.id as assigned_to_id,
                                                   count(i.id) as total 
                                                 from 
-                                                  #{Issue.table_name} i, #{IssueStatus.table_name} s, #{User.table_name} a
+                                                  #{Issue.table_name} i, #{IssueStatus.table_name} s, #{User.table_name} a, issues_users ia
                                                 where 
                                                   i.status_id=s.id 
-                                                  and i.assigned_to_id=a.id
+                                                  and ia.user_id=a.id
+                                                  and ia.issue_id=i.id
                                                   and i.project_id=#{@project.id}
                                                 group by s.id, s.is_closed, a.id")
   end
