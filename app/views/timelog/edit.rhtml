@@ -8,11 +8,12 @@
 <div class="box">
 <% if @time_entry.new_record? %>
 <p>
+	<%= label_tag :project_id, 'Project<span class="required"> *</span>' %> 
 	<%= select_tag :project_id,
 		options_for_select(@projects.collect {|project| [project.name, project.id]}, @time_entry.project_id),
 		{:required=>true}%>
 </p>
-<p><span id="time_entry_issue_id_p"><%= f.select :issue_id, @time_entry.project.issues.collect {|issue| [issue.subject, issue.id]} %></span></p>
+<p><span id="time_entry_issue_id_p"><%= f.select :issue_id, @time_entry.project.issues.collect {|issue| [issue.subject, issue.id]}, :required => true %></span></p>
 <% else %>
 <p><%= f.text_field :issue_id, :size => 6 %>
 <em><%= h("#{@time_entry.project.name} > ") %></em>

@@ -63,7 +63,6 @@ class IssuesController < ApplicationController
         format.atom { limit = Setting.feeds_limit.to_i }
         format.csv  { limit = Setting.issues_export_limit.to_i }
         format.pdf  { limit = Setting.issues_export_limit.to_i }
-        format.xml  { }
       end
 
       @issue_count = @query.issue_count
@@ -73,13 +72,15 @@ class IssuesController < ApplicationController
                               :offset => @issue_pages.current.offset,
                               :limit => limit)
       @issue_count_by_group = @query.issue_count_by_group
+      
+      @issues = @issues.select{|is| is.assigned_to.include?(User.current)} if params[:for_select]
 
       respond_to do |format|
         format.html {
           render :template => 'issues/index.rhtml', :layout => !request.xhr? unless params[:for_select]
           render :partial => 'issues/options_for_issues', :layout => false if params[:for_select]
         }
-        format.xml  { render :xml=>@issues}
+        format.xml  { render :xml=>@issues.select{|is| is.assigned_to.include?(User.current)}}
 #        format.xml  { render :layout => false }
         format.atom { render_feed(@issues, :title => "#{@project || Setting.app_title}: #{l(:label_issue_plural)}") }
         format.csv  { send_data(issues_to_csv(@issues, @project), :type => 'text/csv; header=present', :filename => 'export.csv') }

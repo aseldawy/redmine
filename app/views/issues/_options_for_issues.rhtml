@@ -1,1 +1,2 @@
+<%= label_tag :issue_id, 'Issue<span class="required"> *</span>' %>
 <%= select 'time_entry', 'issue_id', @issues.collect {|issue| [issue.subject, issue.id]}%>
