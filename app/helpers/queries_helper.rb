@@ -28,8 +28,10 @@ module QueriesHelper
   end
   
   def column_content(column, issue)
-    value = column.value(issue)
+    # value may be an array
+    values = [column.value(issue)].flatten
     
+    values.map do |value|
     case value.class.name
     when 'String'
       if column.name == :subject
@@ -60,5 +62,6 @@ module QueriesHelper
     else
       h(value)
     end
+    end.join(", ") #map
   end
 end
