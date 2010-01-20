@@ -185,7 +185,7 @@ class IssuesController < ApplicationController
 
   # Attributes that can be updated on workflow transition (without :edit permission)
   # TODO: make it configurable (at least per role)
-  UPDATABLE_ATTRS_ON_TRANSITION = %w(status_id assigned_to_id fixed_version_id done_ratio) unless const_defined?(:UPDATABLE_ATTRS_ON_TRANSITION)
+  UPDATABLE_ATTRS_ON_TRANSITION = %w(status_id assigned_to_ids fixed_version_id done_ratio) unless const_defined?(:UPDATABLE_ATTRS_ON_TRANSITION)
 
   def edit
     @allowed_statuses = @issue.new_statuses_allowed_to(User.current)

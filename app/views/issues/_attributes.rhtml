@@ -8,10 +8,22 @@
 <% end %>
 
 <p><%= f.select :priority_id, (@priorities.collect {|p| [p.name, p.id]}), :required => true %></p>
-<% @issue.assigned_to_ids.each do |assigned_to_id| -%>
-<p><%= select_tag 'issue[assigned_to_ids][]', options_for_select(@issue.assignable_users.collect {|m| [m.name, m.id]}, assigned_to_id) %></p>
-<% end -%>
-<p><%= select_tag 'issue[assigned_to_ids][]', options_for_select(@issue.assignable_users.collect {|m| [m.name, m.id]}) %></p>
+
+<div id="assigned_to_fields">
+	<% (@issue.assigned_to_ids + [nil]).each do |assigned_to_id| -%>
+	  <p>
+	    <%= label_tag 'issue[assigned_to_ids][]', "Assigned to" %>
+			<span>
+				<%= assigned_to_combo(@issue, assigned_to_id) %>
+			</span>
+		</p>
+	<% end -%>
+</div>
+<p>
+<%= link_to_function(image_tag("add.png", :title=>"Added Assignee")) do |page|
+  page.insert_html(:bottom, 'assigned_to_fields', "<p>#{assigned_to_combo(@issue, nil)}</p>")
+end %>
+</p>
 <% unless @project.issue_categories.empty? %>
 <p><%= f.select :category_id, (@project.issue_categories.collect {|c| [c.name, c.id]}), :include_blank => true %>
 <%= prompt_to_remote(image_tag('add.png', :style => 'vertical-align: middle;'),

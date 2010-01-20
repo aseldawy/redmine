@@ -5,7 +5,11 @@ xml.issue :id => @issue.id do
 	xml.status(:id => @issue.status_id, :name => @issue.status.name) unless @issue.status.nil?
 	xml.priority(:id => @issue.priority_id, :name => @issue.priority.name) unless @issue.priority.nil?
  	xml.author(:id => @issue.author_id, :name => @issue.author.name) unless @issue.author.nil?
- 	xml.assigned_to(:id => @issue.assigned_to_id, :name => @issue.assigned_to.name) unless @issue.assigned_to.nil?
+  xml.assigned_to do
+    @issue.assigned_to.each do |assignee|
+      xml.assignee(:id => assignee.id, :name => assignee.name)
+    end
+  end unless @issue.assigned_to.empty?
   xml.category(:id => @issue.category_id, :name => @issue.category.name) unless @issue.category.nil?
   xml.fixed_version(:id => @issue.fixed_version_id, :name => @issue.fixed_version.name) unless @issue.fixed_version.nil?
   

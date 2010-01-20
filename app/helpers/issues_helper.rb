@@ -196,4 +196,10 @@ module IssuesHelper
     end
     export
   end
+  
+  def assigned_to_combo(issue, assigned_to_id)
+    select_tag('issue[assigned_to_ids][]',
+      options_for_select(issue.assignable_users.collect {|m| [m.name, m.id]} + [nil], assigned_to_id)) +
+    link_to_function(image_tag('delete.png', :title=>"Delete Assignee"), "this.parentNode.innerHTML = ''")
+  end
 end
