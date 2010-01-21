@@ -274,7 +274,8 @@ class TimelogController < ApplicationController
       flash[:notice] = l(:notice_successful_update)
       # respond to according to format
       respond_to do |format|
-        format.html { redirect_back_or_default :action => 'details', :project_id => @time_entry.project }
+#        format.html { redirect_back_or_default :action => 'details', :project_id => @time_entry.project }
+        format.html { redirect_to :action=>'edit' }
         format.xml  { render :xml => @time_entry }
       end
       return
