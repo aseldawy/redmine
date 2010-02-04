@@ -118,16 +118,16 @@ class TimelogControllerTest < ActionController::TestCase
                 :time_entry => {:comments => 'Some work on TimelogControllerTest',
                                 # Not the default activity
                                 :activity_id => '11',
-                                :spent_on => '2008-03-14',
+                                :spent_from => '2008-03-14 00:00',
                                 :issue_id => '1',
-                                :hours => '7.3'}
-    assert_redirected_to :action => 'details', :project_id => 'ecookbook'
+                                :spent_to => '2008-03-14 07:30'}
+    assert_redirected_to :action => 'edit', :project_id => 'ecookbook'
     
     i = Issue.find(1)
     t = TimeEntry.find_by_comments('Some work on TimelogControllerTest')
     assert_not_nil t
     assert_equal 11, t.activity_id
-    assert_equal 7.3, t.hours
+    assert_equal 7.5, t.hours
     assert_equal 3, t.user_id
     assert_equal i, t.issue
     assert_equal i.project, t.project
@@ -141,8 +141,8 @@ class TimelogControllerTest < ActionController::TestCase
     @request.session[:user_id] = 1
     post :edit, :id => 1,
                 :time_entry => {:issue_id => '2',
-                                :hours => '8'}
-    assert_redirected_to :action => 'details', :project_id => 'ecookbook'
+                                :spent_to => '2007-03-23 08:00'}
+    assert_redirected_to :action => 'edit', :project_id => 'ecookbook'
     entry.reload
     
     assert_equal 8, entry.hours
