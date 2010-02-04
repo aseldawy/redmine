@@ -173,6 +173,7 @@ class Issue < ActiveRecord::Base
     priority_id
     fixed_version_id
     assigned_to_ids
+    billable
     subject
     description
     start_date

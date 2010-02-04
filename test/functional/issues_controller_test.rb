@@ -735,6 +735,7 @@ class IssuesControllerTest < ActionController::TestCase
                              :issue => {:tracker_id => 2, 
                                         :subject => 'This is the test_new issue',
                                         :description => 'This is the description',
+                                        :billable => "1",
                                         :priority_id => 5}
     assert_response :success
     assert_template 'attributes'
@@ -744,6 +745,7 @@ class IssuesControllerTest < ActionController::TestCase
     assert_equal 1, issue.id
     assert_equal 1, issue.project_id
     assert_equal 2, issue.tracker_id
+    assert_equal true, issue.billable
     assert_equal 'This is the test_new issue', issue.subject
   end
   
