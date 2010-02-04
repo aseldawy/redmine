@@ -40,6 +40,7 @@ class IssuesController < ApplicationController
   helper :attachments
   include AttachmentsHelper
   helper :queries
+  include QueriesHelper
   helper :sort
   include SortHelper
   include IssuesHelper
@@ -113,7 +114,7 @@ class IssuesController < ApplicationController
     @journals = @issue.journals.find(:all, :include => [:user, :details], :order => "#{Journal.table_name}.created_on ASC")
     @journals.each_with_index {|j,i| j.indice = i+1}
     @journals.reverse! if User.current.wants_comments_in_reverse_order?
-    @changesets = @issue.changesets
+    @changesets = @issue.changesets.visible.all
     @changesets.reverse! if User.current.wants_comments_in_reverse_order?
     @allowed_statuses = @issue.new_statuses_allowed_to(User.current)
     @edit_allowed = User.current.allowed_to?(:edit_issues, @project)
@@ -226,7 +227,7 @@ class IssuesController < ApplicationController
           end
           call_hook(:controller_issues_edit_after_save, { :params => params, :issue => @issue, :time_entry => @time_entry, :journal => journal})
           respond_to do |format|
-            format.html { redirect_to(params[:back_to] || {:action => 'show', :id => @issue}) }
+            format.html { redirect_back_or_default({:action => 'show', :id => @issue}) }
             format.xml  { head :ok }
           end
           return
@@ -304,7 +305,7 @@ class IssuesController < ApplicationController
                                                          :total => @issues.size,
                                                          :ids => '#' + unsaved_issue_ids.join(', #'))
       end
-      redirect_to(params[:back_to] || {:controller => 'issues', :action => 'index', :project_id => @project})
+      redirect_back_or_default({:controller => 'issues', :action => 'index', :project_id => @project})
       return
     end
     @available_statuses = Workflow.available_statuses(@project)
@@ -548,7 +549,7 @@ private
       session[:query] = {:id => @query.id, :project_id => @query.project_id}
       sort_clear
     else
-      if params[:set_filter] || session[:query].nil? || session[:query][:project_id] != (@project ? @project.id : nil)
+      if api_request? || params[:set_filter] || session[:query].nil? || session[:query][:project_id] != (@project ? @project.id : nil)
         # Give it a name, required to be valid
         @query = Query.new(:name => "_")
         @query.project = @project

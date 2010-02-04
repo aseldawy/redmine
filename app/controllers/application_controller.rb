@@ -22,6 +22,7 @@ class ApplicationController < ActionController::Base
   include Redmine::I18n
 
   layout 'base'
+  exempt_from_layout 'builder'
   
   # Remove broken cookie after upgrade from 0.8.x (#4292)
   # See https://rails.lighthouseapp.com/projects/8994/tickets/3360
@@ -226,6 +227,9 @@ class ApplicationController < ActionController::Base
   end
   
   def invalid_authenticity_token
+    if api_request?
+      logger.error "Form authenticity token is missing or is invalid. API calls must include a proper Content-type header (text/xml or text/json)."
+    end
     render_error "Invalid form authenticity token."
   end
   
@@ -306,5 +310,9 @@ class ApplicationController < ActionController::Base
   # Returns a string that can be used as filename value in Content-Disposition header
   def filename_for_content_disposition(name)
     request.env['HTTP_USER_AGENT'] =~ %r{MSIE} ? ERB::Util.url_encode(name) : name
+  end
+  
+  def api_request?
+    %w(xml json).include? params[:format]
   end
 end

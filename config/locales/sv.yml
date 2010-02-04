@@ -713,6 +713,8 @@ sv:
   label_board: Forum
   label_board_new: Nytt forum
   label_board_plural: Forum
+  label_board_locked: Låst
+  label_board_sticky: Sticky  
   label_topic_plural: Ämnen
   label_message_plural: Meddelanden
   label_message_last: Senaste meddelande
