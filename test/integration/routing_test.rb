@@ -1,5 +1,5 @@
 # redMine - project management software
-# Copyright (C) 2006-2007  Jean-Philippe Lang
+# Copyright (C) 2006-2010  Jean-Philippe Lang
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -15,23 +15,12 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
-class WikisController < ApplicationController
-  menu_item :settings
-  before_filter :find_project, :authorize
-  
-  # Create or update a project's wiki
-  def edit
-    @wiki = @project.wiki || Wiki.new(:project => @project)
-    @wiki.attributes = params[:wiki]
-    @wiki.save if request.post?
-    render(:update) {|page| page.replace_html "tab-content-wiki", :partial => 'projects/settings/wiki'}
-  end
+require "test_helper"
 
-  # Delete a project's wiki
-  def destroy
-    if request.post? && params[:confirm] && @project.wiki
-      @project.wiki.destroy
-      redirect_to :controller => 'projects', :action => 'settings', :id => @project, :tab => 'wiki'
-    end    
+class RoutingTest < ActionController::IntegrationTest
+  context "issue reports" do
+    should_route :get, "/projects/567/issues/report", :controller => 'reports', :action => 'issue_report', :id => '567'
+    should_route :get, "/projects/567/issues/report/assigned_to", :controller => 'reports', :action => 'issue_report_details', :id => '567', :detail => 'assigned_to'
   end
+  
 end

@@ -22,6 +22,27 @@ class ReportsController < ApplicationController
   def issue_report
     @statuses = IssueStatus.find(:all, :order => 'position')
     
+    @trackers = @project.trackers
+    @versions = @project.shared_versions.sort
+    @priorities = IssuePriority.all
+    @categories = @project.issue_categories
+    @assignees = @project.members.collect { |m| m.user }.sort
+    @authors = @project.members.collect { |m| m.user }.sort
+    @subprojects = @project.descendants.active
+    issues_by_tracker
+    issues_by_version
+    issues_by_priority
+    issues_by_category
+    issues_by_assigned_to
+    issues_by_author
+    issues_by_subproject
+      
+    render :template => "reports/issue_report"
+  end  
+
+  def issue_report_details
+    @statuses = IssueStatus.find(:all, :order => 'position')
+
     case params[:detail]
     when "tracker"
       @field = "tracker_id"
@@ -66,33 +87,11 @@ class ReportsController < ApplicationController
       @report_title = l(:field_subproject)
       render :template => "reports/issue_report_details"  
     else
-      @trackers = @project.trackers
-      @versions = @project.shared_versions.sort
-      @priorities = IssuePriority.all
-      @categories = @project.issue_categories
-      @assignees = @project.members.collect { |m| m.user }.sort
-      @authors = @project.members.collect { |m| m.user }.sort
-      @subprojects = @project.descendants.active
-      issues_by_tracker
-      issues_by_version
-      issues_by_priority
-      issues_by_category
-      issues_by_assigned_to
-      issues_by_author
-      issues_by_subproject
-      
-      render :template => "reports/issue_report"
+      redirect_to :action => 'issue_report', :id => @project
     end
-  end  
-  
-private
-  # Find project of id params[:id]
-  def find_project
-    @project = Project.find(params[:id])		
-  rescue ActiveRecord::RecordNotFound
-    render_404
-  end
 
+  end
+private
   def issues_by_tracker
     @issues_by_tracker ||= Issue.by_tracker(@project)
   end
