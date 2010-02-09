@@ -10,4 +10,15 @@ issues_users_003:
   issue_id: 4
   user_id: 2
 
-  
+issues_users_004:
+  issue_id: 8
+  user_id: 6
+
+issues_users_005:
+  issue_id: 11
+  user_id: 6
+
+issues_users_006:
+  issue_id: 12
+  user_id: 6
+

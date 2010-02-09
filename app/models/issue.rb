@@ -443,9 +443,21 @@ class Issue < ActiveRecord::Base
   end
 
   def self.by_assigned_to(project)
-    count_and_group_by(:project => project,
-                       :field => 'assigned_to_id',
-                       :joins => User.table_name)
+    ActiveRecord::Base.connection.select_all("select    s.id as status_id, 
+                                                s.is_closed as closed, 
+                                                j.user_id as assigned_to_id,
+                                                count(i.id) as total 
+                                              from 
+                                                  #{Issue.table_name} i, #{IssueStatus.table_name} s, issues_users as j
+                                              where 
+                                                i.status_id=s.id 
+                                                and i.id = j.issue_id
+                                                and i.project_id=#{project.id}
+                                              group by s.id, s.is_closed, j.user_id")
+
+#    count_and_group_by(:project => project,
+#                       :field => 'assigned_to_id',
+#                       :joins => User.table_name)
   end
 
   def self.by_author(project)

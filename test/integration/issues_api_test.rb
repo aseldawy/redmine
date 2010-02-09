@@ -24,6 +24,7 @@ class IssuesApiTest < ActionController::IntegrationTest
     :members,
     :member_roles,
     :issues,
+    :issues_users,
     :issue_statuses,
     :versions,
     :trackers,
