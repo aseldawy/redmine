@@ -940,7 +940,7 @@ class IssuesControllerTest < ActionController::TestCase
       put :update,
            :id => 1,
            :notes => notes,
-           :time_entry => {"comments"=>"", "activity_id"=>"", "hours"=>"2z"}
+           :time_entry => {"comments"=>"", "activity_id"=>"", "spent_from"=>Time.now, "spent_to"=>"asdfas"}
     end
     assert_response :success
     assert_template 'edit'
@@ -1200,10 +1200,20 @@ class IssuesControllerTest < ActionController::TestCase
   
   def test_bulk_billable
     @request.session[:user_id] = 2
-    post :bulk_edit, :ids => [1, 2], :billable => 'billable'
+    post :bulk_edit, :ids => [1, 2], :issue=>{:billable => 'true'}
     assert_redirected_to 'projects/ecookbook/issues'
     assert Issue.find(1).billable
     assert Issue.find(2).billable
+  end
+  
+  def test_bulk_non_billable
+    assert Issue.find(1).update_attribute :billable, true
+    assert Issue.find(2).update_attribute :billable, true
+    @request.session[:user_id] = 2
+    post :bulk_edit, :ids => [1, 2], :issue=>{:billable => 'false'}
+    assert_redirected_to 'projects/ecookbook/issues'
+    assert !Issue.find(1).billable
+    assert !Issue.find(2).billable
   end
   
   def test_copy_to_another_project_should_follow_when_needed

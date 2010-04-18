@@ -123,6 +123,7 @@ class TimeEntry < ActiveRecord::Base
   
   # Merge adjacent time entries on new
   def merge_entries
+    return unless self.spent_from && self.spent_to
     # Find a time entry that could be adjacent
     t = nil
     begin

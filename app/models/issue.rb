@@ -492,12 +492,12 @@ class Issue < ActiveRecord::Base
 
   # Saves an issue, time_entry, attachments, and a journal from the parameters
   def save_issue_with_child_records(params, existing_time_entry=nil)
-    if params[:time_entry] && params[:time_entry][:hours].present? && User.current.allowed_to?(:log_time, project)
+    if params[:time_entry] && params[:time_entry][:spent_from].present? && params[:time_entry][:spent_to].present? && User.current.allowed_to?(:log_time, project)
       @time_entry = existing_time_entry || TimeEntry.new
       @time_entry.project = project
       @time_entry.issue = self
       @time_entry.user = User.current
-      @time_entry.spent_on = Date.today
+      #@time_entry.spent_on = Date.today
       @time_entry.attributes = params[:time_entry]
       self.time_entries << @time_entry
     end

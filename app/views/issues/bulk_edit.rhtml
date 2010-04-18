@@ -52,7 +52,7 @@
 <div class="splitcontentright">
 <p>
 	<%= label_tag :billable, l(:field_billable) %>
-	<%= select_tag 'billable', options_for_select([["billable"], ["non-billable"], [l(:label_no_change_option), "none"]], "none") %>
+	<%= select_tag 'billable', options_for_select([["true"], ["false"], [l(:label_no_change_option), "none"]], "none") %>
 </p>
 <p>
 	<label><%= l(:field_start_date) %></label>
