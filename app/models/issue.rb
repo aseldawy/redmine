@@ -309,7 +309,8 @@ class Issue < ActiveRecord::Base
   def before_create
     # default assignment based on category
     if assigned_to.empty? && category && category.assigned_to
-      self.assigned_to_ids << category.assigned_to_ids
+      self.assigned_to << category.assigned_to
+    end
   end  
   
   # Set the done_ratio using the status if that setting is set.  This will keep the done_ratios

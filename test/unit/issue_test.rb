@@ -432,7 +432,7 @@ class IssueTest < ActiveSupport::TestCase
 
       should "allow assigned_to changes" do
         @copy = @issue.move_to_project(Project.find(3), Tracker.find(2), {:copy => true, :attributes => {:assigned_to_ids => [3]}})
-        assert_equal 3, @copy.assigned_to_ids
+        assert_equal [3], @copy.assigned_to_ids
       end
 
       should "allow status changes" do
