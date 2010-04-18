@@ -99,7 +99,7 @@ class TimelogController < ApplicationController
       elsif @issue.nil?
         sql_condition = @project.project_condition(Setting.display_subprojects_issues?)
       else
-        sql_condition = "#{TimeEntry.table_name}.issue_id = #{@issue.id}"
+        sql_condition = "#{Issue.table_name}.root_id = #{@issue.root_id} AND #{Issue.table_name}.lft >= #{@issue.lft} AND #{Issue.table_name}.rgt <= #{@issue.rgt}"
       end
 
       sql = "SELECT #{sql_select}, tyear, tmonth, tweek, spent_on, billable, SUM(hours) AS hours"
@@ -187,7 +187,7 @@ class TimelogController < ApplicationController
     elsif @issue.nil?
       cond << @project.project_condition(Setting.display_subprojects_issues?)
     else
-      cond << ["#{TimeEntry.table_name}.issue_id = ?", @issue.id]
+      cond << "#{Issue.table_name}.root_id = #{@issue.root_id} AND #{Issue.table_name}.lft >= #{@issue.lft} AND #{Issue.table_name}.rgt <= #{@issue.rgt}"
     end
     
     # Find entries for selected user only
@@ -203,7 +203,7 @@ class TimelogController < ApplicationController
     TimeEntry.visible_by(User.current) do
       respond_to do |format|
         format.html {
-          if params[:view] == 'chart' && params[:user_id]
+        if params[:view] == 'chart' && params[:user_id]
             entries = TimeEntry.find(:all, 
                                       :include => [:project, :activity, :user, {:issue => :tracker}],
                                       :conditions => cond.conditions, :order=>'spent_from')
@@ -214,28 +214,25 @@ class TimelogController < ApplicationController
               @min_hour = entries.first.spent_from.hour if entries.first.spent_from.hour < @min_hour
               @max_hour = entries.last.spent_to.hour if entries.last.spent_to.hour > @max_hour
             end
-            logger.info "-------------------"
-            logger.info entries.collect(&:spent_on).inspect
-            logger.info @entries_by_day.collect(&:first).inspect
-            logger.info "-------------------"
             @max_hour = @min_hour + 7 if @max_hour < @min_hour + 7
             @max_hour += 1
             @total_hours = TimeEntry.sum(:hours, :include => :project, :conditions => cond.conditions).to_f
             render :layout => !request.xhr?
-          else
-            # Paginate results
-            @entry_count = TimeEntry.count(:include => :project, :conditions => cond.conditions)
-            @entry_pages = Paginator.new self, @entry_count, per_page_option, params['page']
-            @entries = TimeEntry.find(:all, 
-                                      :include => [:project, :activity, :user, {:issue => :tracker}],
-                                      :conditions => cond.conditions,
-                                      :order => sort_clause,
-                                      :limit  =>  @entry_pages.items_per_page,
-                                      :offset =>  @entry_pages.current.offset)
-            @total_hours = TimeEntry.sum(:hours, :include => :project, :conditions => cond.conditions).to_f
-  
-            render :layout => !request.xhr?
-          end
+          return
+        end
+
+          # Paginate results
+          @entry_count = TimeEntry.count(:include => [:project, :issue], :conditions => cond.conditions)
+          @entry_pages = Paginator.new self, @entry_count, per_page_option, params['page']
+          @entries = TimeEntry.find(:all, 
+                                    :include => [:project, :activity, :user, {:issue => :tracker}],
+                                    :conditions => cond.conditions,
+                                    :order => sort_clause,
+                                    :limit  =>  @entry_pages.items_per_page,
+                                    :offset =>  @entry_pages.current.offset)
+          @total_hours = TimeEntry.sum(:hours, :include => [:project, :issue], :conditions => cond.conditions).to_f
+
+          render :layout => !request.xhr?
         }
         format.atom {
           entries = TimeEntry.find(:all,
