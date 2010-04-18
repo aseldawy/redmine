@@ -316,7 +316,7 @@ RAW
 
     expected = <<-EXPECTED
 <p><a href="/projects/ecookbook/wiki/CookBook_documentation" class="wiki-page">CookBook documentation</a></p>
-<p><a href="/issues/1" class="issue status-1 priority-1" title="Can't print recipes (New)">#1</a></p>
+<p><a href="/issues/1" class="issue status-1 priority-1 non-billable" title="Can't print recipes (New)">#1</a></p>
 <pre>
 [[CookBook documentation]]
 
